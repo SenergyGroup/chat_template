@@ -1,11 +1,14 @@
 <!-- item will be appended to this layout -->
-<div id="log" class="sl__chat__layout">
-
+<div id="app" class="theme-neon">
+    <div id="backdrop"></div>
+    <div id="alerts" aria-live="polite"></div>
+    <div id="offline" class="hidden">Offline — see you soon</div>
+    <div id="log" class="sl__chat__layout" aria-live="polite"></div>
 </div>
 
 <!-- chat item -->
 <script type="text/template" id="chatlist_item">
-    <div data-from="{from}" data-id="{messageId}">
+    <div class="chat-line" data-from="{from}" data-id="{messageId}">
         <span class="meta" style="color: {color}">
             <span class="badges"></span>
             <span class="name">{from}</span>
