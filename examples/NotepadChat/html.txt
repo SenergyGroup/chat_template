@@ -1,0 +1,42 @@
+<!-- item will be appened to this layout -->
+<div class = "desk">
+  <div class="notebook">
+      <!-- <h3 id="chatTitle"><u>Chat</u></h3> -->
+      <ul id="shopping-list">
+        <div id="log" class="sl__chat__layout"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+        <div class="chat_item empty"></div>
+      </ul>
+  </div>
+</div>
+
+<!-- chat item -->
+<script type="text/template" id="chatlist_item">
+  <div data-from="{from}" data-id="{messageId}" class="chat_item">
+      <span class="timeStamp"></span>
+      <span class="meta" style="color: {color}">
+          <span class="badges"></span>
+          <span class="name">{from}</span>
+      </span>
+      <br>
+      <li class="message">{message}</li>
+  </div>
+</script>

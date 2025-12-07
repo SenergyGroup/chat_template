@@ -1,0 +1,68 @@
+{
+  "rainPreset": {
+    "label": "Rain Intensity",
+    "type": "dropdown",
+    "group": "Visual Effects",
+    "options": {
+      "light": "Light",
+      "medium": "Medium",
+      "heavy": "Heavy"
+    },
+    "value": "heavy"
+  },
+  "lightning": {
+    "label": "Enable Lightning",
+    "type": "dropdown",
+    "group": "Visual Effects",
+    "options": {
+      "on": "On",
+      "off": "Off"
+    },
+    "value": "on"
+  },
+  "bgImage": {
+    "label": "Background Image",
+    "type": "image-input",
+    "group": "Visual Effects",
+    "value": "https://cdn.streamlabs.com/users/63962746/library/dan-thekidzzzzz-knOJZwoNht0-unsplash.jpg"
+  },
+  "zoom": {
+    "label": "Raindrop Zoom (Lower is Closer)",
+    "type": "slider",
+    "group": "Visual Effects",
+    "min": 0.3,
+    "max": 5,
+    "steps": 0.1,
+    "value": 0.7
+  },
+  "tintColor": {
+    "label": "Scene Color Tint",
+    "type": "colorpicker",
+    "group": "Visual Effects",
+    "value": "#FFFFFF"
+  },
+  "tintIntensity": {
+    "label": "Tint Intensity",
+    "type": "slider",
+    "group": "Visual Effects",
+    "min": 0,
+    "max": 1,
+    "steps": 0.05,
+    "value": 0.05
+  },
+  "fontColor": {
+    "label": "Chat Font Color",
+    "type": "colorpicker",
+    "group": "Chat Settings",
+    "value": "#E4B1E0"
+  },
+  "fontSize": {
+    "label": "Font Size (px)",
+    "type": "slider",
+    "group": "Chat Settings",
+    "min": 12,
+    "max": 48,
+    "steps": 1,
+    "value": 24
+  }
+}

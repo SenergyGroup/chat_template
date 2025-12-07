@@ -1,0 +1,15 @@
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+
+<canvas id="bg"></canvas>
+
+<div id="log" class="sl__chat__layout"></div>
+
+<script type="text/template" id="chatlist_item">
+  <div class="msg" data-from="{from}" data-id="{messageId}">
+    <span class="meta" style="color:{color}">
+      <span class="badges"></span>
+      <span class="name">{from}</span>
+    </span>
+    <div class="message">{message}</div>
+  </div>
+</script>

@@ -1,0 +1,97 @@
+body {
+  /*
+    Define CSS variables here. Streamlabs will replace the placeholders.
+    This is the bridge between your custom fields and the widget's code.
+  */
+  --rainPreset: '{rainPreset}';
+  --lightning: '{lightning}';
+  --bgImage: '{bgImage}';
+  --zoom: {zoom};
+  --tintColor: '{tintColor}';        /* NEW: Color Picker */
+  --tintIntensity: {tintIntensity};  /* NEW: Slider */
+  --fontColor: {fontColor};
+  --fontSize: {fontSize}px;
+  
+
+  /* General Styles */
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+      @keyframes fadeIn {
+from {
+  opacity: 0;
+  transform: translateY(15px); /* Message starts 15px lower */
+}
+to {
+  opacity: 1;
+  transform: translateY(0); /* Message ends at its natural position */
+}
+}
+
+#log {
+  position: fixed;
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  z-index: 2;
+  /* Use the font variable with a great fallback */
+  font-family: 'Nunito', sans-serif;
+  color: var(--fontColor, white);
+  text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8);
+  font-size: var(--fontSize, 16px);
+  padding:18px 22px;
+}
+
+.wf-active #log {
+  font-family: var(--fontName, 'Lato'), sans-serif;
+}
+
+.msg {
+  padding:10px 14px;
+  margin-bottom: 15px; 
+  background:rgba(0,0,0,.1);
+  backdrop-filter:blur(1px);
+  border-radius: 8px;
+  opacity: 1;
+  transition: opacity 0.6s ease-out;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.msg:last-child {
+    margin-bottom: 0; /* Removes margin from the very last message */
+}
+
+.msg.fade {
+  opacity: 0;
+}
+
+.msg .badges {
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+.msg .name {
+    display: inline-block;
+  	vertical-align: middle;
+    font-weight:700;
+    text-transform:uppercase;
+    margin-bottom:2px;
+    font-size:.9em; 
+}
+
+.msg .message{
+    display:block;
+    line-height:1.45;
+}

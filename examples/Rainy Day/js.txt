@@ -1,0 +1,264 @@
+function getCssString(name) {
+const value = getComputedStyle(document.body).getPropertyValue(name).trim();
+return value.replace(/^['"]|['"]$/g, '');
+}
+
+function getCssVar(name) {
+return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
+
+function hexToRgb(hex) {
+    if (!hex || typeof hex !== 'string') return [1,1,1];
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [parseInt(result[1], 16)/255, parseInt(result[2], 16)/255, parseInt(result[3], 16)/255] : [1,1,1];
+}
+
+function presetToValue(p){
+if (p === 'light') return 0.25;
+if (p === 'heavy') return 0.9;
+return 0.6; 
+}
+
+const fontName = getCssString('--fontName');
+if (fontName && fontName.toLowerCase() !== 'lato') {
+WebFont.load({
+    google: {
+    families: [`${fontName}:400,700`]
+    },
+
+    active: function() {
+    const logEl = document.getElementById('log');
+    if (logEl) {
+        logEl.style.fontFamily = getCssString('--fontName');
+    }
+    }
+});
+console.log('Loading custom font:', fontName);
+}
+
+const logEl = document.getElementById('log');
+const tpl = document.getElementById('chatlist_item').innerHTML;
+
+function addMessage(data){
+const maxMessages = parseInt(getCssVar('--maxMessages'), 10) || 12;
+const fadeSeconds = parseInt(getCssVar('--fadeSeconds'), 10) || 0;
+
+const html = tpl
+    .replace(/\{from\}/g, data.name)
+    .replace('{messageId}', data.msgId)
+    .replace('{color}', data.color || '#fff')
+    .replace('{message}', data.message);
+
+const wrap = document.createElement('div');
+wrap.innerHTML = html;
+const node = wrap.firstElementChild;
+logEl.appendChild(node);
+
+while (logEl.children.length > maxMessages && maxMessages > 0) {
+    logEl.removeChild(logEl.firstElementChild);
+}
+
+if (fadeSeconds > 0) {
+    setTimeout(() => node.classList.add('fade'), (fadeSeconds - 0.6) * 1000);
+    setTimeout(() => node.remove(), fadeSeconds * 1000);
+}
+}
+
+// NOTE: The original onEventReceived listener is removed for this mockup.
+// window.addEventListener('onEventReceived', e => { ... });
+
+const canvas = document.getElementById('bg');
+const gl = canvas.getContext('webgl2', { antialias:false, premultipliedAlpha:false });
+if (!gl) throw new Error('WebGL2 not supported');
+
+const vertSrc = `#version 300 es
+precision highp float;
+const vec2 v[3]=vec2[3](vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));
+out vec2 v_uv;
+void main(){ gl_Position=vec4(v[gl_VertexID],0.,1.); v_uv=v[gl_VertexID]*.5+.5; }`;
+
+const fragSrc = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+in vec2 v_uv;
+uniform vec3  iResolution;
+uniform float iTime;
+uniform float iTimeDelta;
+uniform int   iFrame;
+uniform sampler2D iChannel0;
+uniform float uRain;
+uniform float uLightning;
+uniform float uZoom;
+/* NEW UNIFORMS */
+uniform vec3 uTintColor;
+uniform float uTintIntensity;
+
+#define S(a,b,t) smoothstep(a,b,t)
+#define USE_POST_PROCESSING
+#define FREEZE_ZOOM
+vec3 N13(float p){
+    vec3 p3=fract(vec3(p)*vec3(.1031,.11369,.13787));
+    p3+=dot(p3,p3.yzx+19.19);
+    return fract(vec3((p3.x+p3.y)*p3.z,(p3.x+p3.z)*p3.y,(p3.y+p3.z)*p3.x));
+}
+float N(float t){return fract(sin(t*12345.564)*7658.76);}
+float Saw(float b,float t){return S(0.,b,t)*S(1.,b,t);}
+vec2 DropLayer2(vec2 uv,float t){
+    vec2 UV=uv;
+    uv.y+=t*.75;
+    vec2 a=vec2(6.,1.);
+    vec2 grid=a*2.;
+    vec2 id=floor(uv*grid);
+    float colShift=N(id.x);
+    uv.y+=colShift;
+    id=floor(uv*grid);
+    vec3 n=N13(id.x*35.2+id.y*2376.1);
+    vec2 st=fract(uv*grid)-vec2(.5,0);
+    float x=n.x-.5;
+    float y=UV.y*20.;
+    float wiggle=sin(y+sin(y));
+    x+=wiggle*(.5-abs(x))*(n.z-.5);
+    x*=.7;
+    float ti=fract(t+n.z);
+    y=(Saw(.85,ti)-.5)*.9+.5;
+    vec2 p=vec2(x,y);
+    float d=length((st-p)*a.yx);
+    float mainDrop=S(.4,.0,d);
+    float r=sqrt(S(1.,y,st.y));
+    float cd=abs(st.x-x);
+    float trail=S(.23*r,.15*r*r,cd);
+    float trailFront=S(-.02,.02,st.y-y);
+    trail*=trailFront*r*r;
+    y=UV.y;
+    float trail2=S(.2*r,.0,cd);
+    float droplets=max(0.,(sin(y*(1.-y)*120.)-st.y))*trail2*trailFront*n.z;
+    y=fract(y*10.)+(st.y-.5);
+    float dd=length(st-vec2(x,y));
+    droplets=S(.3,0.,dd);
+    float m=mainDrop+droplets*r*trailFront;
+    return vec2(m,trail);
+}
+float StaticDrops(vec2 uv,float t){
+    uv*=40.;
+    vec2 id=floor(uv);
+    uv=fract(uv)-.5;
+    vec3 n=N13(id.x*107.45+id.y*3543.654);
+    vec2 p=(n.xy-.5)*.7;
+    float d=length(uv-p);
+    float fade=Saw(.025,fract(t+n.z));
+    float c=S(.3,0.,d)*fract(n.z*10.)*fade;
+    return c;
+}
+vec2 Drops(vec2 uv,float t,float l0,float l1,float l2){
+    float s=StaticDrops(uv,t)*l0;
+    vec2 m1=DropLayer2(uv,t)*l1;
+    vec2 m2=DropLayer2(uv*1.85,t)*l2;
+    float c=s+m1.x+m2.x;
+    c=S(.3,1.,c);
+    return vec2(c,max(m1.y*l0,m2.y*l1));
+}
+void mainImage(out vec4 fragColor,in vec2 fragCoord){
+    vec2 uv = (fragCoord - .5*iResolution.xy)/iResolution.y;
+    vec2 UV = fragCoord/iResolution.xy;
+    float T = iTime;
+    float t = T*.2;
+    float rainAmount = clamp(uRain,0.0,1.0);
+    float maxBlur = mix(3.,6.,rainAmount);
+    float minBlur = 2.;
+    #ifdef FREEZE_ZOOM
+    uv *= uZoom;
+    UV = (UV - .5)*0.8 + .5;
+    #else
+    float zoom = -cos(T*.2);
+    uv *= .7 + zoom*.3;
+    UV = (UV-.5)*(.9+zoom*.1)+.5;
+    #endif
+    float staticDrops = S(-.5,1.,rainAmount)*2.;
+    float layer1 = S(.25,.75,rainAmount);
+    float layer2 = S(.0,.5,rainAmount);
+    vec2 c = Drops(uv,t,staticDrops,layer1,layer2);
+    vec2 e = vec2(.001,0.);
+    float cx = Drops(uv+e,t,staticDrops,layer1,layer2).x;
+    float cy = Drops(uv+e.yx,t,staticDrops,layer1,layer2).x;
+    vec2 n = vec2(cx-c.x, cy-c.x);
+    float focus = mix(maxBlur-c.y, minBlur, S(.1,.2,c.x));
+    vec3 col = textureLod(iChannel0, UV+n, focus).rgb;
+    #ifdef USE_POST_PROCESSING
+    t = (T+3.)*.5;
+    float colFade = sin(t*.2)*.5+.5;
+    col *= mix(vec3(1.), vec3(.8,.9,1.3), colFade);
+
+    /*************************************/
+    /**   THIS IS THE LINE TO CHANGE    **/
+    /*************************************/
+    float fade = 1.0; /* WAS: float fade = S(0.,10.,T); */
+
+    float lightning = 0.0;
+    if(uLightning > 0.5){
+        lightning = sin(t*sin(t*10.));
+        lightning *= pow(max(0., sin(t+sin(t))), 10.);
+    }
+    col *= 1.+lightning*fade;
+    col *= 1.-dot(UV-=.5, UV);
+    col *= fade;
+    #endif
+
+    col = mix(col, uTintColor, uTintIntensity);
+
+    fragColor = vec4(col,1.);
+}
+void main(){ mainImage(fragColor,v_uv*iResolution.xy); }
+`;
+
+function compile(type, src){ const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); if(!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)); return sh; }
+const prog = gl.createProgram(); gl.attachShader(prog, compile(gl.VERTEX_SHADER, vertSrc)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fragSrc)); gl.linkProgram(prog); if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog)); gl.useProgram(prog);
+const U = { iResolution: gl.getUniformLocation(prog,'iResolution'), iTime: gl.getUniformLocation(prog,'iTime'), iTimeDelta: gl.getUniformLocation(prog,'iTimeDelta'), iFrame: gl.getUniformLocation(prog,'iFrame'), iChannel0: gl.getUniformLocation(prog,'iChannel0'), uRain: gl.getUniformLocation(prog,'uRain'), uLightning: gl.getUniformLocation(prog,'uLightning'), uZoom: gl.getUniformLocation(prog,'uZoom'), uTintColor: gl.getUniformLocation(prog, 'uTintColor'), uTintIntensity: gl.getUniformLocation(prog, 'uTintIntensity') };
+const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT); gl.uniform1i(U.iChannel0, 0);
+function uploadTexture(img){ gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); gl.generateMipmap(gl.TEXTURE_2D); }
+function makeBG(){ const w=1024,h=512,c=document.createElement('canvas'); c.width=w;c.height=h; const ctx=c.getContext('2d'); const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,'#0a0d1a'); g.addColorStop(.5,'#1b1f3a'); g.addColorStop(1,'#0a0d1a'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h); for(let i=0;i<600;i++){ const x=Math.random()*w, y=Math.random()*h; const r=4+Math.random()*30; const a=.05+.2*Math.random(); ctx.fillStyle='rgba('+(150+Math.random()*105|0)+','+(120+Math.random()*135|0)+','+(80+Math.random()*120|0)+','+a+')'; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); } const t=document.createElement('canvas'); t.width=w/4; t.height=h/4; const tc=t.getContext('2d'); tc.drawImage(c,0,0,t.width,t.height); ctx.clearRect(0,0,w,h); ctx.drawImage(t,0,0,w,h); return c; }
+function loadBG(url){ if(!url || url.includes('{') || url.length < 5) { uploadTexture(makeBG()); return; } const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = ()=>{ uploadTexture(img); }; img.onerror = ()=>{ console.error("Failed to load background image. Using default."); uploadTexture(makeBG()); }; img.src = url; }
+function resize(){ const dpr = window.devicePixelRatio || 1; const w = Math.floor(innerWidth*dpr); const h = Math.floor(innerHeight*dpr); if (canvas.width!==w || canvas.height!==h){ canvas.width = w; canvas.height = h; gl.viewport(0,0,w,h); gl.uniform3f(U.iResolution, w, h, 1); } }
+window.addEventListener('resize', resize); resize();
+
+let currentRain = presetToValue(getCssString('--rainPreset') || 'heavy');
+let currentBGUrl = getCssString('--bgImage');
+loadBG(currentBGUrl); 
+
+let start = performance.now()/1000;
+let last  = start;
+let frame = 0;
+
+function loop(){
+const newBGUrl = getCssString('--bgImage');
+const targetRain = presetToValue(getCssString('--rainPreset') || 'heavy');
+const lightning  = (getCssString('--lightning') || 'on') === 'on' ? 1 : 0;
+const zoom       = parseFloat(getCssVar('--zoom')) || 2.5;
+const tintColor  = hexToRgb(getCssString('--tintColor'));
+const tintIntensity = parseFloat(getCssVar('--tintIntensity')) || 0.0;
+
+if (newBGUrl && newBGUrl !== currentBGUrl) {
+    console.log("New background detected. Loading:", newBGUrl);
+    loadBG(newBGUrl);
+    currentBGUrl = newBGUrl;
+}
+
+const now = performance.now()/1000;
+const t   = now - start;
+const dt  = now - last;
+last = now;
+currentRain += (targetRain - currentRain) * 0.05;
+
+gl.uniform1f(U.iTime, t);
+gl.uniform1f(U.iTimeDelta, dt);
+gl.uniform1i(U.iFrame, frame++);
+gl.uniform1f(U.uRain, currentRain);
+gl.uniform1f(U.uLightning, lightning);
+gl.uniform1f(U.uZoom, zoom);
+gl.uniform3fv(U.uTintColor, tintColor);
+gl.uniform1f(U.uTintIntensity, tintIntensity);
+
+gl.drawArrays(gl.TRIANGLES, 0, 3);
+requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
