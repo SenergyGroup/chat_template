@@ -1,16 +1,25 @@
 <!-- item will be appended to this layout -->
-<div id="log" class="sl__chat__layout">
-
+<div class="crt-frame">
+    <div class="crt-bezel">
+        <div class="crt-inner">
+            <div class="scanline-layer"></div>
+            <div class="glow-layer"></div>
+            <div id="log" class="sl__chat__layout"></div>
+        </div>
+    </div>
 </div>
 
 <!-- chat item -->
 <script type="text/template" id="chatlist_item">
-    <div data-from="{from}" data-id="{messageId}">
+    <div data-from="{from}" data-id="{messageId}" class="chat-row">
         <span class="meta" style="color: {color}">
             <span class="badges"></span>
             <span class="name">{from}</span>
         </span>
 
-        <span class="message">{message}</span>
+        <span class="message">
+            <span class="prompt-arrow">▶</span>
+            {message}
+        </span>
     </div>
 </script>
