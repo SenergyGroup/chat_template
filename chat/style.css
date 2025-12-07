@@ -1,7 +1,17 @@
-@import url(https://fonts.googleapis.com/css?family=Roboto:700);
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
 * {
     box-sizing: border-box;
+}
+
+:root {
+    --bg-color: {background_color};
+    --accent: {customField1};
+    --scanline-opacity: {customField2};
+    --screen-color: {customField3};
+    --glow-color: {customField4};
+    --text-color: {text_color};
+    --font-size: {font_size};
 }
 
 html, body {
@@ -10,36 +20,124 @@ html, body {
 }
 
 body {
-    text-shadow: 0 0 1px #000, 0 0 2px #000;
-    background: {background_color};
-    font-family: 'Roboto';
-    font-weight: 700;
-    font-size: {font_size};
-    line-height: 1.5em;
-    color: {text_color};
+    margin: 0;
+    font-family: 'Press Start 2P', 'VT323', monospace;
+    font-size: var(--font-size);
+    line-height: 1.6em;
+    color: var(--text-color);
+    background: radial-gradient(circle at 20% 20%, rgba(255, 90, 196, 0.25), transparent 25%),
+        radial-gradient(circle at 80% 10%, rgba(66, 240, 255, 0.2), transparent 30%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), transparent 35%),
+        linear-gradient(135deg, rgba(10, 10, 36, 0.95), rgba(6, 6, 20, 0.9)),
+        var(--bg-color);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, cover;
+    position: relative;
+    display: grid;
+    place-items: center;
 }
 
-#log>div {
-    animation: fadeInRight .3s ease forwards, fadeOut 0.5s ease {message_hide_delay} forwards;
-    -webkit-animation: fadeInRight .3s ease forwards, fadeOut 0.5s ease {message_hide_delay} forwards;
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    pointer-events: none;
 }
 
-.colon {
-    display: none;
+.crt-frame {
+    width: 100%;
+    height: 100%;
+    padding: 2.5vh 3vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0 8px, rgba(255, 255, 255, 0.03) 8px 16px);
+}
+
+.crt-bezel {
+    width: 90vw;
+    height: 90vh;
+    padding: 1.5rem;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(36, 44, 58, 0.8), rgba(17, 22, 31, 0.85));
+    box-shadow: 0 0 0 6px #0c0f1f, 0 0 0 10px var(--accent), 0 0 35px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.crt-bezel::before {
+    content: "PIXEL LINK";
+    position: absolute;
+    top: 16px;
+    right: 22px;
+    color: var(--accent);
+    font-size: 0.55em;
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 8px var(--accent);
+}
+
+.crt-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 1rem 1.5rem 1.25rem;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 55%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.65)),
+        var(--screen-color);
+    border-radius: 16px;
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8), inset 0 0 35px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+.scanline-layer {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, var(--scanline-opacity)) 0px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode: overlay;
+    opacity: 0.35;
+    pointer-events: none;
+    animation: scan 12s linear infinite;
+}
+
+.glow-layer {
+    position: absolute;
+    inset: -8px;
+    background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), transparent 50%);
+    box-shadow: 0 0 55px 25px var(--glow-color);
+    opacity: 0.25;
+    filter: blur(2px);
+    pointer-events: none;
+    animation: glowPulse 4s ease-in-out infinite;
 }
 
 #log {
-    display: table;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
     position: absolute;
-    bottom: 0;
-    left: 0;
-    padding: 0 10px 10px;
-    width: 100%;
+    inset: 0;
+    padding: 1.5rem;
+    padding-right: 2rem;
+    overflow: hidden;
+    justify-content: flex-end;
     table-layout: fixed;
+    z-index: 1;
 }
 
 #log>div {
-    display: table-row;
+    display: grid;
+    grid-template-columns: minmax(8rem, 30%) 1fr;
+    align-items: start;
+    gap: 0.6rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(12, 18, 38, 0.8), rgba(17, 40, 64, 0.65));
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 0 2px #05070e, 0 0 24px rgba(0, 0, 0, 0.65);
+    animation: slideUp .35s ease forwards, fadeOut 0.5s ease {message_hide_delay} forwards;
 }
 
 #log>div.deleted {
@@ -60,24 +158,26 @@ body {
     opacity: 0;
 }
 
-#log .message,#log .meta {
+#log .message,
+#log .meta {
     vertical-align: top;
-    display: table-cell;
-    padding-bottom: 0.1em;
+    display: block;
+    line-height: 1.5em;
 }
 
 #log .meta {
-    width: 35%;
     text-align: right;
-    padding-right: 0.5em;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 6px var(--accent));
 }
 
 #log .message {
     word-wrap: break-word;
-    width: 65%;
+    color: var(--text-color);
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.75);
 }
 
 .badge {
@@ -91,4 +191,61 @@ body {
 
 .name {
     margin-left: 0.2em;
+    letter-spacing: 0.05em;
+}
+
+.prompt-arrow {
+    display: inline-block;
+    margin-right: 0.45em;
+    color: var(--accent);
+    text-shadow: 0 0 12px var(--accent), 0 0 22px rgba(255, 255, 255, 0.35);
+}
+
+.chat-row.flash {
+    animation: flashRow 0.35s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 14px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes scan {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 0 300px;
+    }
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        opacity: 0.25;
+        filter: blur(2px);
+    }
+    50% {
+        opacity: 0.35;
+        filter: blur(4px);
+    }
+}
+
+@keyframes flashRow {
+    0% { box-shadow: 0 0 0 2px var(--accent), 0 0 22px var(--accent); }
+    100% { box-shadow: 0 0 0 2px #05070e, 0 0 24px rgba(0, 0, 0, 0.65); }
 }
